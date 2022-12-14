@@ -12,6 +12,7 @@ export async function post (): Promise<void> {
   let slackToken: string
   let slackChannel: string
   let deploymentConfidenceUrl: string
+  let mutateDeployment: boolean
 
   const { actor, ref, repo, sha } = github.context
 
@@ -41,6 +42,9 @@ export async function post (): Promise<void> {
 
     slackChannel = getInput('slack_channel') ?? ''
     console.log(`slack_channel: ${slackChannel}`)
+
+    mutateDeployment = getInput('mutate_deployment') !== 'false'
+    console.log(`mutate_deployment: ${mutateDeployment.toString()}`)
 
     deploymentConfidenceUrl = getInput('deployment_confidence_url') ?? ''
     console.log(`deployment confidence dashboard URL: ${deploymentConfidenceUrl}`)
@@ -72,7 +76,8 @@ export async function post (): Promise<void> {
       await postSlackNotification(slackToken, slackChannel, environment, status, github.context, deploymentConfidenceUrl)
 
       try {
-        await complete(client, Number(deploymentId), status)
+        // If the deployment was managed by another workflow we don't want to mutate it here
+        if (mutateDeployment) await complete(client, Number(deploymentId), status)
       } catch (error) {
         if (error instanceof Error && error.name === 'HttpError' && (error as { status?: unknown }).status === 404) {
           console.log('Couldn\'t complete a deployment: not found')
