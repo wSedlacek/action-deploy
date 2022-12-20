@@ -7,7 +7,7 @@ async function invalidatePreviousDeployments (
 ): Promise<void> {
   const deployments = await client.rest.repos.listDeployments({
     ...context.repo,
-    ref: context.ref,
+    ref: (context.payload.pull_request as { head?: { ref?: string } })?.head?.ref ?? context.ref,
     environment
   })
 
@@ -81,7 +81,7 @@ export async function create (
 
   const deployment = await client.rest.repos.createDeployment({
     ...context.repo,
-    ref: context.ref,
+    ref: (context.payload.pull_request as { head?: { ref?: string } })?.head?.ref ?? context.ref,
     required_contexts: [],
     environment,
     transient_environment: true,

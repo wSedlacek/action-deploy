@@ -10994,8 +10994,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.create = void 0;
 const github_1 = __webpack_require__(469);
 function invalidatePreviousDeployments(client, environment) {
+    var _a, _b, _c;
     return __awaiter(this, void 0, void 0, function* () {
-        const deployments = yield client.rest.repos.listDeployments(Object.assign(Object.assign({}, github_1.context.repo), { ref: github_1.context.ref, environment }));
+        const deployments = yield client.rest.repos.listDeployments(Object.assign(Object.assign({}, github_1.context.repo), { ref: (_c = (_b = (_a = github_1.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.head) === null || _b === void 0 ? void 0 : _b.ref) !== null && _c !== void 0 ? _c : github_1.context.ref, environment }));
         yield Promise.all(deployments.data.map((deployment) => __awaiter(this, void 0, void 0, function* () {
             const statuses = yield client.rest.repos.listDeploymentStatuses(Object.assign(Object.assign({}, github_1.context.repo), { deployment_id: deployment.id }));
             const lastStatus = statuses.data.sort((a, b) => a.id - b.id).slice(-1)[0];
@@ -11025,6 +11026,7 @@ function getMainSha(client, branch) {
     });
 }
 function create(client, logUrl, description, initialStatus, environment, environmentUrl, mainBranch) {
+    var _a, _b, _c;
     return __awaiter(this, void 0, void 0, function* () {
         yield invalidatePreviousDeployments(client, environment);
         // get main branch sha to store in payload
@@ -11033,7 +11035,8 @@ function create(client, logUrl, description, initialStatus, environment, environ
             actor: github_1.context.actor,
             main_sha: mainBranchSha
         });
-        const deployment = yield client.rest.repos.createDeployment(Object.assign(Object.assign({}, github_1.context.repo), { ref: github_1.context.ref, required_contexts: [], environment, transient_environment: true, auto_merge: false, description,
+        console.log(`created deployment: ${JSON.stringify(github_1.context)}`);
+        const deployment = yield client.rest.repos.createDeployment(Object.assign(Object.assign({}, github_1.context.repo), { ref: (_c = (_b = (_a = github_1.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.head) === null || _b === void 0 ? void 0 : _b.ref) !== null && _c !== void 0 ? _c : github_1.context.ref, required_contexts: [], environment, transient_environment: true, auto_merge: false, description,
             payload }));
         if (deployment.status !== 201) {
             throw new Error('failed to create deployment');
