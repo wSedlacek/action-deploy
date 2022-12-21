@@ -28,7 +28,7 @@ async function invalidatePreviousDeployments (
       )
 
       // invalidate the deployment
-      if (lastStatus?.state === 'success') {
+      if (lastStatus !== undefined && lastStatus?.state !== 'inactive') {
         console.log(`invalidating deployment: ${JSON.stringify(deployment, null, 2)}`)
         await client.rest.repos.createDeploymentStatus({
           ...context.repo,

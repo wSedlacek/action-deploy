@@ -10885,6 +10885,7 @@ function post() {
         let slackToken;
         let slackChannel;
         let deploymentConfidenceUrl;
+        let mutateDeployment;
         const { actor, ref, repo, sha } = github.context;
         console.log('### post.context ###');
         console.log(`actor: ${actor}`);
@@ -10906,6 +10907,8 @@ function post() {
             console.log(`slack_token: ${slackToken === '' ? 'none' : 'passed'}`);
             slackChannel = (_d = utils_1.getInput('slack_channel')) !== null && _d !== void 0 ? _d : '';
             console.log(`slack_channel: ${slackChannel}`);
+            mutateDeployment = utils_1.getInput('mutate_deployment') !== 'false';
+            console.log(`mutate_deployment: ${mutateDeployment.toString()}`);
             deploymentConfidenceUrl = (_e = utils_1.getInput('deployment_confidence_url')) !== null && _e !== void 0 ? _e : '';
             console.log(`deployment confidence dashboard URL: ${deploymentConfidenceUrl}`);
         }
@@ -10932,7 +10935,9 @@ function post() {
                 // Post Slack notification
                 yield utils_1.postSlackNotification(slackToken, slackChannel, environment, status, github.context, deploymentConfidenceUrl);
                 try {
-                    yield complete_1.complete(client, Number(deploymentId), status);
+                    // If the deployment was managed by another workflow we don't want to mutate it here
+                    if (mutateDeployment)
+                        yield complete_1.complete(client, Number(deploymentId), status);
                 }
                 catch (error) {
                     if (error instanceof Error && error.name === 'HttpError' && error.status === 404) {

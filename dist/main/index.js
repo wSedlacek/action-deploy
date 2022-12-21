@@ -3007,7 +3007,11 @@ function run() {
         switch (type) {
             case 'create':
                 try {
-                    deploymentId = yield create_1.create(client, logsUrl, description, status, environment, environmentUrl, mainBranch);
+                    // If a deployment was already created on a previous job,
+                    // don't create one again.
+                    if (deploymentId === '0') {
+                        deploymentId = yield create_1.create(client, logsUrl, description, status, environment, environmentUrl, mainBranch);
+                    }
                     console.log(`saveState::${utils_1.DEPLOYMENT_ID_STATE_NAME}: ${deploymentId}`);
                     core.saveState(utils_1.DEPLOYMENT_ID_STATE_NAME, deploymentId); // for internal use
                     core.setOutput(utils_1.DEPLOYMENT_ID_STATE_NAME, deploymentId); // keep that output for external dependencies
@@ -11002,7 +11006,7 @@ function invalidatePreviousDeployments(client, environment) {
             const lastStatus = statuses.data.sort((a, b) => a.id - b.id).slice(-1)[0];
             console.log(`last status for deployment_id '${deployment.id}': ${JSON.stringify(lastStatus, null, 2)}`);
             // invalidate the deployment
-            if ((lastStatus === null || lastStatus === void 0 ? void 0 : lastStatus.state) === 'success') {
+            if (lastStatus !== undefined && (lastStatus === null || lastStatus === void 0 ? void 0 : lastStatus.state) !== 'inactive') {
                 console.log(`invalidating deployment: ${JSON.stringify(deployment, null, 2)}`);
                 yield client.rest.repos.createDeploymentStatus(Object.assign(Object.assign({}, github_1.context.repo), { deployment_id: deployment.id, state: 'inactive', environment_url: lastStatus.environment_url, log_url: lastStatus.log_url }));
             }
@@ -11035,7 +11039,6 @@ function create(client, logUrl, description, initialStatus, environment, environ
             actor: github_1.context.actor,
             main_sha: mainBranchSha
         });
-        console.log(`created deployment: ${JSON.stringify(github_1.context)}`);
         const deployment = yield client.rest.repos.createDeployment(Object.assign(Object.assign({}, github_1.context.repo), { ref: (_c = (_b = (_a = github_1.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.head) === null || _b === void 0 ? void 0 : _b.ref) !== null && _c !== void 0 ? _c : github_1.context.ref, required_contexts: [], environment, transient_environment: true, auto_merge: false, description,
             payload }));
         if (deployment.status !== 201) {
